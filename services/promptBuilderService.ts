@@ -149,6 +149,19 @@ export const constructCinematicPrompt = (
             .map(o => objects.find(obj => obj.id === o.objectId))
             .filter((o): o is GObject => !!o);
 
+        const sequenceKeywords = scene.sceneSequence.map(item => {
+            switch (item.type) {
+                case 'dialog':
+                    const character = subjects.find(s => s.id === item.characterId);
+                    const charName = character ? character.name : 'character';
+                    return `${charName} says "${item.dialogText || ''}" (${item.intonation || 'normal intonation'})`;
+                case 'sfx':
+                    return `sound effect of ${item.description || 'a sound'}`;
+                default:
+                    return null;
+            }
+        }).filter(Boolean).join(', ');
+
         const corePhrases = [
             global.visualStyle,
             mainChar ? generateSubjectDescription(mainChar).replace(/\./g, '') : null,
@@ -163,6 +176,7 @@ export const constructCinematicPrompt = (
             global.typeShot,
             scene.cameraMovement,
             ...effects,
+            sequenceKeywords,
             sceneObjects.length > 0 ? `featuring ${sceneObjects.map(o => o.name).join(', ')}` : null,
             global.additionalVisualDetails
         ];
@@ -199,6 +213,32 @@ export const constructCinematicPrompt = (
 
     if (global.additionalVisualDetails) {
         phrases.push(`Final visual touches include: ${global.additionalVisualDetails}.`);
+    }
+
+    if (scene.sceneSequence && scene.sceneSequence.length > 0) {
+        const sequenceDescriptions = scene.sceneSequence.map(item => {
+            switch (item.type) {
+                case 'dialog':
+                    const character = subjects.find(s => s.id === item.characterId);
+                    const charName = character ? character.name : 'A character';
+                    let dialogDesc = `${charName} says, "${item.dialogText || ''}"`;
+                    const details = [];
+                    if (item.language && item.language !== 'Tanpa Bahasa') details.push(`in ${item.language}`);
+                    if (item.intonation) details.push(`with a ${item.intonation} intonation`);
+                    if (details.length > 0) dialogDesc += ` ${details.join(' ')}`;
+                    return dialogDesc;
+                case 'pause':
+                    return `a pause for ${item.duration || 1} second(s)`;
+                case 'sfx':
+                    return `the sound of ${item.description || 'an undescribed sound'} is heard`;
+                default:
+                    return '';
+            }
+        }).filter(Boolean);
+
+        if (sequenceDescriptions.length > 0) {
+            phrases.push(`The scene's audio sequence is as follows: ${sequenceDescriptions.join(', followed by ')}.`);
+        }
     }
 
     return phrases.join(' ').replace(/\s+/g, ' ').trim();
