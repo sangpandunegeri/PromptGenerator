@@ -592,7 +592,8 @@ export const generateVideoFusionPrompt = async (
 
     instructionText += ` The final video should feel like a single, continuous camera shot, smoothly interpolating between the two keyframes. Focus on describing the transformation and movement.`;
 
-    const response = await withRetry(() => ai.models.generateContent({
+    // FIX: Explicitly type the response to resolve the 'unknown' type error.
+    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: { parts: [{ text: instructionText }, imagePart1, imagePart2] },
     }));
