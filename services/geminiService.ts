@@ -325,10 +325,11 @@ const STORYBOARD_SCHEMA = {
     }
 };
 
-export const generateStoryboardFromIdea = async (idea: string, apiKey: string, imageFile: File | null): Promise<any> => {
+export const generateStoryboardFromIdea = async (idea: string, visualStyle: string, apiKey: string, imageFile: File | null): Promise<any> => {
     const ai = getClient(apiKey);
 
-    const promptText = `Anda adalah seorang penulis naskah dan sinematografer Hollywood yang ahli. Tugas Anda adalah mengambil ide cerita pengguna dan memecahnya menjadi storyboard sinematik yang mendetail dengan 3 hingga 5 adegan. ${imageFile ? "Gunakan gambar yang diberikan sebagai referensi visual utama untuk karakter, lingkungan, dan/atau objek dalam cerita. Pastikan deskripsi visual di setiap adegan konsisten dengan gambar referensi." : ""} Untuk setiap adegan, Anda harus memberikan deskripsi yang detail, tipe shot kamera, gerakan kamera, dan suasana (mood). Output harus berupa array JSON yang valid.
+    const styleInstruction = visualStyle ? `Sangat penting: Seluruh storyboard harus secara konsisten mematuhi gaya visual '${visualStyle}'. Sebutkan elemen gaya ini dalam deskripsi adegan jika relevan (misalnya, 'karakter digambar dengan gaya anime').` : '';
+    const promptText = `Anda adalah seorang penulis naskah dan sinematografer Hollywood yang ahli. Tugas Anda adalah mengambil ide cerita pengguna dan memecahnya menjadi storyboard sinematik yang mendetail dengan 3 hingga 5 adegan. ${styleInstruction} ${imageFile ? "Gunakan gambar yang diberikan sebagai referensi visual utama untuk karakter, lingkungan, dan/atau objek dalam cerita. Pastikan deskripsi visual di setiap adegan konsisten dengan gambar referensi." : ""} Untuk setiap adegan, Anda harus memberikan deskripsi yang detail, tipe shot kamera, gerakan kamera, dan suasana (mood). Output harus berupa array JSON yang valid.
 
 Ide Cerita: "${idea}"`;
 
@@ -352,11 +353,12 @@ Ide Cerita: "${idea}"`;
     return JSON.parse(response.text.trim());
 };
 
-export const continueStoryboardFromFrames = async (idea: string, existingFrames: any[], apiKey: string, imageFile: File | null): Promise<any> => {
+export const continueStoryboardFromFrames = async (idea: string, existingFrames: any[], visualStyle: string, apiKey: string, imageFile: File | null): Promise<any> => {
     const ai = getClient(apiKey);
     const lastSceneNumber = existingFrames.length > 0 ? existingFrames[existingFrames.length - 1].sceneNumber : 0;
     
-    const promptText = `Anda adalah seorang penulis naskah dan sinematografer Hollywood yang ahli. Tugas Anda adalah melanjutkan sebuah cerita yang sudah ada. Berdasarkan ide cerita asli dan adegan-adegan sebelumnya, tulis 2 hingga 3 adegan BERIKUTNYA yang logis dan menarik. ${imageFile ? "Sangat penting: pertahankan konsistensi visual dengan gambar referensi yang diberikan untuk setiap karakter, lingkungan, atau objek baru yang Anda perkenalkan." : ""} Lanjutkan penomoran adegan dari yang terakhir. Output harus berupa array JSON yang valid.
+    const styleInstruction = visualStyle ? `PENTING: Pastikan semua adegan baru yang Anda tulis secara ketat mengikuti gaya visual yang telah ditetapkan: '${visualStyle}'.` : '';
+    const promptText = `Anda adalah seorang penulis naskah dan sinematografer Hollywood yang ahli. Tugas Anda adalah melanjutkan sebuah cerita yang sudah ada. Berdasarkan ide cerita asli dan adegan-adegan sebelumnya, tulis 2 hingga 3 adegan BERIKUTNYA yang logis dan menarik. ${styleInstruction} ${imageFile ? "Sangat penting: pertahankan konsistensi visual dengan gambar referensi yang diberikan untuk setiap karakter, lingkungan, atau objek baru yang Anda perkenalkan." : ""} Lanjutkan penomoran adegan dari yang terakhir. Output harus berupa array JSON yang valid.
 
 Ide Cerita Asli: "${idea}"
 
@@ -541,62 +543,5 @@ User Instructions:
         model: 'gemini-2.5-flash',
         contents: instruction,
     }));
-    return response.text;
-};
-
-// FIX: Added missing generateVideoFusionPrompt function
-export const generateVideoFusionPrompt = async (
-    sceneData: { file: File; camera: any }[],
-    transition: { duration: string; additionalPrompt: string },
-    apiKey: string
-): Promise<string> => {
-    const ai = getClient(apiKey);
-    const [scene1, scene2] = sceneData;
-
-    const imagePart1 = await fileToGenerativePart(scene1.file);
-    const imagePart2 = await fileToGenerativePart(scene2.file);
-
-    const getCameraDeltaDescription = (cam1: any, cam2: any): string => {
-        const parts: string[] = [];
-        const zoomDiff = cam2.zoom - cam1.zoom;
-        const panXDiff = cam2.panX - cam1.panX;
-        const panYDiff = cam2.panY - cam1.panY;
-        const orbitDiff = cam2.orbit - cam1.orbit;
-
-        if (zoomDiff > 0.1) parts.push(`zooms in from ${cam1.zoom.toFixed(1)}x to ${cam2.zoom.toFixed(1)}x`);
-        else if (zoomDiff < -0.1) parts.push(`zooms out from ${cam1.zoom.toFixed(1)}x to ${cam2.zoom.toFixed(1)}x`);
-
-        if (panXDiff > 5) parts.push('pans to the right');
-        else if (panXDiff < -5) parts.push('pans to the left');
-        
-        if (panYDiff > 5) parts.push('pans down');
-        else if (panYDiff < -5) parts.push('pans up');
-
-        if (orbitDiff > 5) parts.push('orbits right');
-        else if (orbitDiff < -5) parts.push('orbits left');
-
-        return parts.length > 0 ? `The camera smoothly ${parts.join(', ')}.` : '';
-    };
-
-    const cameraDeltaPrompt = getCameraDeltaDescription(scene1.camera, scene2.camera);
-    
-    let instructionText = `Analyze the two provided images. Image 1 is the starting frame and Image 2 is the ending frame. Your task is to write a single, cohesive video prompt for a generative AI like Google Veo. This prompt should describe a seamless, cinematic transition from Image 1 to Image 2 over approximately ${transition.duration || '4'} seconds. Describe the visual changes between the scenes.`;
-    
-    if (cameraDeltaPrompt) {
-        instructionText += ` Also, incorporate this camera movement: ${cameraDeltaPrompt}`;
-    }
-    
-    if (transition.additionalPrompt) {
-        instructionText += ` During the transition, apply the following creative direction: "${transition.additionalPrompt}".`;
-    }
-
-    instructionText += ` The final video should feel like a single, continuous camera shot, smoothly interpolating between the two keyframes. Focus on describing the transformation and movement.`;
-
-    // FIX: Explicitly type the response to resolve the 'unknown' type error.
-    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: instructionText }, imagePart1, imagePart2] },
-    }));
-
     return response.text;
 };

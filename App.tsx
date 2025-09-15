@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, Box, Image, Edit, Banknote, MapPin, Film, Camera, Settings, HelpCircle, Video, Layers, Clapperboard, GitMerge, ClipboardSignature } from 'lucide-react';
+import { Home, Users, Box, Image, Edit, Banknote, MapPin, Film, Camera, Settings, HelpCircle, Video, Layers, Clapperboard, GitMerge, ClipboardSignature, Archive } from 'lucide-react';
 
 import HomePage from './components/HomePage';
 import AssetBuilderPage from './components/AssetBuilderPage';
@@ -17,7 +17,7 @@ import HelpPage from './components/HelpPage';
 import Sidebar from './components/layout/Sidebar';
 import useLocalStorage from './hooks/useLocalStorage';
 
-import { Page, AssetType } from './types';
+import { Page, AssetType, NavigationStructureItem } from './types';
 import { subjectFormFields, objectFormFields, locationFormFields, actionFormFields, initialSubjectFormData, initialObjectFormData, initialLocationFormData, initialActionFormData } from './constants';
 
 const App: React.FC = () => {
@@ -42,23 +42,38 @@ const App: React.FC = () => {
         setCurrentPage('videoGenerator');
     };
 
-    const navItems = [
-        { icon: <Home className="w-5 h-5" />, label: "Beranda", page: 'home' as Page },
-        { icon: <Users className="w-5 h-5" />, label: "Subjek Builder", page: 'subjectBuilder' as Page },
-        { icon: <Box className="w-5 h-5" />, label: "Object Builder", page: 'objectBuilder' as Page },
-        { icon: <MapPin className="w-5 h-5" />, label: "Location Builder", page: 'locationBuilder' as Page },
-        { icon: <Film className="w-5 h-5" />, label: "Action Builder", page: 'actionBuilder' as Page },
-        { icon: <Image className="w-5 h-5" />, label: "Image Detector", page: 'imageDetector' as Page },
-        { icon: <Edit className="w-5 h-5" />, label: "Mode Manual", page: 'manualMode' as Page },
-        { icon: <Camera className="w-5 h-5" />, label: "One Stop Motion Shot", page: 'stopMotionShot' as Page },
-        { icon: <ClipboardSignature className="w-5 h-5" />, label: "Pencerita AI", page: 'storyGenerator' as Page },
-        { icon: <Clapperboard className="w-5 h-5" />, label: "Storyboard by Image", page: 'storyboardGenerator' as Page },
-        { icon: <Layers className="w-5 h-5" />, label: "Penggabung Gambar", page: 'imageFusion' as Page },
-        { icon: <GitMerge className="w-5 h-5" />, label: "Video Fusion", page: 'videoFusion' as Page },
-        { icon: <Video className="w-5 h-5" />, label: "Video Generator", page: 'videoGenerator' as Page },
-        { icon: <Banknote className="w-5 h-5" />, label: "Bank Prompt", page: 'promptBank' as Page },
-        { icon: <HelpCircle className="w-5 h-5" />, label: "Bantuan (FAQ)", page: 'help' as Page },
-        { icon: <Settings className="w-5 h-5" />, label: "Pengaturan", page: 'settings' as Page },
+    const navItems: NavigationStructureItem[] = [
+        { icon: <Home className="w-5 h-5" />, label: "Beranda", page: 'home' },
+        {
+            icon: <Archive className="w-5 h-5" />, label: "Aset Builder",
+            children: [
+                { icon: <Users className="w-5 h-5" />, label: "Subjek Builder", page: 'subjectBuilder' },
+                { icon: <Box className="w-5 h-5" />, label: "Object Builder", page: 'objectBuilder' },
+                { icon: <MapPin className="w-5 h-5" />, label: "Location Builder", page: 'locationBuilder' },
+                { icon: <Film className="w-5 h-5" />, label: "Action Builder", page: 'actionBuilder' },
+            ]
+        },
+        {
+            icon: <Image className="w-5 h-5" />, label: "Image Tools",
+            children: [
+                { icon: <Image className="w-5 h-5" />, label: "Image Detector", page: 'imageDetector' },
+                { icon: <ClipboardSignature className="w-5 h-5" />, label: "Pencerita AI", page: 'storyGenerator' },
+                { icon: <Clapperboard className="w-5 h-5" />, label: "Storyboard by Image", page: 'storyboardGenerator' },
+                { icon: <Layers className="w-5 h-5" />, label: "Penggabung Gambar", page: 'imageFusion' },
+            ]
+        },
+        {
+            icon: <Video className="w-5 h-5" />, label: "Video Tools",
+            children: [
+                { icon: <GitMerge className="w-5 h-5" />, label: "Video Fusion", page: 'videoFusion' },
+                { icon: <Edit className="w-5 h-5" />, label: "Mode Manual", page: 'manualMode' },
+                { icon: <Camera className="w-5 h-5" />, label: "One Stop Motion Shot", page: 'stopMotionShot' },
+                { icon: <Video className="w-5 h-5" />, label: "Video Generator", page: 'videoGenerator' },
+            ]
+        },
+        { icon: <Banknote className="w-5 h-5" />, label: "Bank Prompt", page: 'promptBank' },
+        { icon: <HelpCircle className="w-5 h-5" />, label: "Bantuan (FAQ)", page: 'help' },
+        { icon: <Settings className="w-5 h-5" />, label: "Pengaturan", page: 'settings' },
     ];
     
     const renderPage = () => {

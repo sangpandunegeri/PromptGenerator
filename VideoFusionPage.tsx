@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Loader2, Wand2, Trash2, GitMerge, Upload, Video, Copy, RefreshCw, Camera, X } from 'lucide-react';
+import { Loader2, Wand2, Trash2, GitMerge, Upload, Video, RefreshCw, Camera, X } from 'lucide-react';
 import TextAreaField from './ui/TextAreaField';
 import InputField from './ui/InputField';
 

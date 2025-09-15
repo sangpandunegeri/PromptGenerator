@@ -831,3 +831,49 @@ export const negativePromptCategories: { [key: string]: string[] } = {
   "Gaya & Kesalahan Umum": ["inconsistent lighting", "flat lighting", "oversaturated", "unnatural shadow", "monochrome", "mixed styles", "cartoonish", "sketch style", "text overlay", "watermark", "signature", "logo", "subtitle", "compression artifact"],
   "Lain-lain": ["background clutter", "irrelevant object", "lens flare", "unnatural pose", "stiff motion", "awkward movement", "emotionless face", "frozen frame", "flickering", "jerky animation", "modern clothes", "daylight", "smiling", "crowd", "blood", "hindari distorsi fiskeye", "tanpa lensa sudut lebar yang ekstrem"]
 };
+
+export const videoFusionTransitionOptions: SelectOptions = [
+    {
+        label: "Transformasi & Morfing",
+        options: [
+            { value: "The first image seamlessly morphs and transforms its shape and features into the second image. The transition should be fluid and organic.", label: "Morfing Halus" },
+            { value: "The elements of the first image break apart into geometric shapes (e.g., cubes, triangles) which then fly and reassemble to form the second image.", label: "Pecah & Rakit Ulang Geometris" },
+            { value: "The first image transforms into the second as if it were a 3D model being sculpted and reshaped in real-time.", label: "Transformasi 3D (Sculpting)" },
+        ]
+    },
+    {
+        label: "Gaya & Digital",
+        options: [
+            { value: "A digital glitch effect with datamoshing, pixel sorting, and artifacting completely takes over the first image, and as the glitch subsides, the second image is revealed.", label: "Glitch & Datamosh" },
+            { value: "The first image pixelates into large blocks of color, which then resolve and sharpen into the second image.", label: "Pixelasi (Pixelate)" },
+            { value: "A cinematic film burn effect with light leaks wipes across the screen, revealing the second image from the first.", label: "Film Burn & Light Leaks" },
+            { value: "The image transitions as if being fast-forwarded on a VHS tape, complete with scan lines and tracking errors, before settling on the second image.", label: "Efek VHS Rewind/Forward" },
+        ]
+    },
+    {
+        label: "Elemen & Partikel",
+        options: [
+            { value: "The first image dissolves into a thick plume of smoke, which then clears to reveal the second image.", label: "Asap (Smoke)" },
+            { value: "The first image bursts into realistic flames, and from the embers and dying fire, the second image emerges.", label: "Api (Fire)" },
+            { value: "The first image shatters like glass, and the pieces fly away to reveal the second image behind it.", label: "Pecahan Kaca (Glass Shatter)" },
+            { value: "The first image disintegrates into a swirling vortex of sand or dust particles, which then coalesce to form the second image.", label: "Partikel Pasir/Debu" },
+            { value: "The first image becomes covered in water droplets or ripples, which then wash away to show the second image.", label: "Air (Water)" }
+        ]
+    },
+     {
+        label: "Gerakan & Reveal (Untuk Logo/UI)",
+        options: [
+            { value: "A clean, corporate-style reveal. The first image slides out of frame to the left while the second image slides in from the right.", label: "Geser (Slide)" },
+            { value: "The first image fades out (dissolves) while the second image simultaneously fades in.", label: "Memudar (Fade/Dissolve)" },
+            { value: "The transition happens like turning a page in a book or a 3D layer flipping over to reveal the second image on its back.", label: "Balik (Flip/Page Turn)" },
+        ]
+    },
+    {
+        label: "Abstrak & Cairan",
+        options: [
+            { value: "The first image appears to melt and dissolve like liquid metal or ink in water, reforming into the second image.", label: "Meleleh & Larut (Melt & Dissolve)" },
+            { value: "The transition is an explosion of colorful paint splatters that cover the first image and then drip away to reveal the second.", label: "Cipratan Cat (Paint Splash)" },
+            { value: "The transition uses flowing, organic, ink-bleed-style tendrils that grow from the first image and resolve into the second.", label: "Tinta Menyebar (Ink Bleed)" },
+        ]
+    }
+];

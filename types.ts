@@ -23,10 +23,27 @@ export enum AssetType {
     Aksi = 'Aksi'
 }
 
+export type TargetEngine = 'veo' | 'runway' | 'kling' | 'imagen' | 'midjourney' | 'flux';
+
 export interface BaseAsset {
     id: string;
     name: string;
 }
+
+export interface NavItem {
+  icon: React.ReactNode;
+  label: string;
+  page: Page;
+}
+
+export interface NavGroup {
+  icon: React.ReactNode;
+  label: string;
+  children: NavItem[];
+}
+
+export type NavigationStructureItem = NavItem | NavGroup;
+
 
 export interface Subject extends BaseAsset {
     gender?: string;

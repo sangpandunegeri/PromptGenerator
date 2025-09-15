@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Wand2, Copy, Video, Bot, Trash2, Image as ImageIcon, Camera, Film, Upload } from 'lucide-react';
-import { generateStoryboardFromIdea, continueStoryboardFromFrames, suggestShotsFromDescription, generateImage, generateImageFromImageAndText, suggestCameraMovementFromDescription } from '../services/geminiService';
+import { generateStoryboardFromIdea, continueStoryboardFromFrames, suggestShotsFromDescription, generateImage, suggestCameraMovementFromDescription } from '../services/geminiService';
 import useLocalStorage from '../hooks/useLocalStorage';
 import TextAreaField from './ui/TextAreaField';
+import SelectField from './ui/SelectField';
+import { visualStyleOptions } from '../constants';
 
 interface StoryGeneratorPageProps {
     apiKey: string;
@@ -37,6 +39,7 @@ interface LoadingStates {
 
 const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGenerateVideo }) => {
     const [storyIdea, setStoryIdea] = useLocalStorage('storyGeneratorIdea', '');
+    const [visualStyle, setVisualStyle] = useLocalStorage('storyGeneratorVisualStyle', '');
     const [frames, setFrames] = useLocalStorage<StoryFrame[]>('storyGeneratorFrames', []);
     const [finalPrompt, setFinalPrompt] = useState('');
     const [loading, setLoading] = useState(false);
@@ -51,22 +54,25 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
     const [suggestedShots, setSuggestedShots] = useLocalStorage<SuggestedShotsState>('storyGeneratorSuggestedShots', {});
     const [generatedImages, setGeneratedImages] = useLocalStorage<GeneratedImagesState>('storyGeneratorGeneratedImages', {});
     const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
+    const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
 
 
-    const formatStoryboardToPrompt = (storyFrames: StoryFrame[]): string => {
+    const formatStoryboardToPrompt = (storyFrames: StoryFrame[], style: string): string => {
         if (storyFrames.length === 0) return '';
-        return storyFrames
+        const stylePrefix = style ? `A cinematic video in a ${style} style. ` : '';
+        const storyBody = storyFrames
             .map(frame =>
                 `Scene ${frame.sceneNumber}: ${frame.sceneDescription}. The shot is a ${frame.shotType}. The camera performs a ${frame.cameraMovement}. The mood is ${frame.mood}.`
             )
             .join(' It then transitions to the next scene. ');
+        return stylePrefix + storyBody;
     };
 
     // Auto-update final prompt whenever frames change
     useEffect(() => {
-        const formattedPrompt = formatStoryboardToPrompt(frames);
+        const formattedPrompt = formatStoryboardToPrompt(frames, visualStyle);
         setFinalPrompt(formattedPrompt);
-    }, [frames]);
+    }, [frames, visualStyle]);
 
 
     const showMessage = (msg: string, type: 'success' | 'error' | 'info') => {
@@ -115,7 +121,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
         showMessage('AI sedang menulis dan menyutradarai cerita Anda...', 'info');
 
         try {
-            const generatedFrames: StoryFrame[] = await generateStoryboardFromIdea(storyIdea, apiKey, referenceImage?.file ?? null);
+            const generatedFrames: StoryFrame[] = await generateStoryboardFromIdea(storyIdea, visualStyle, apiKey, referenceImage?.file ?? null);
             setFrames(generatedFrames);
             showMessage('Storyboard sinematik berhasil dibuat!', 'success');
         } catch (error) {
@@ -139,7 +145,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
         setIsContinuing(true);
         showMessage("AI sedang melanjutkan cerita Anda...", 'info');
         try {
-            const newFrames: StoryFrame[] = await continueStoryboardFromFrames(storyIdea, frames, apiKey, referenceImage?.file ?? null);
+            const newFrames: StoryFrame[] = await continueStoryboardFromFrames(storyIdea, frames, visualStyle, apiKey, referenceImage?.file ?? null);
             setFrames(prev => [...prev, ...newFrames]);
             showMessage('Cerita berhasil dilanjutkan!', 'success');
         } catch (error) {
@@ -158,6 +164,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
         if (window.confirm("Anda yakin ingin menghapus storyboard saat ini dari penyimpanan?")) {
             setFrames([]);
             setStoryIdea('');
+            setVisualStyle('');
             setSuggestedShots({});
             setGeneratedImages({});
             setLoadingStates({});
@@ -191,37 +198,15 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
         setLoadingStates(prev => ({ ...prev, [frame.sceneNumber]: { ...prev[frame.sceneNumber], image: true } }));
         
         try {
-            const existingImage = generatedImages[frame.sceneNumber];
-            let newBase64Image: string;
-            let mimeType = 'image/png';
-    
-            if (existingImage) {
-                // Subsequent generations use the previously generated image as a base
-                const modificationPrompt = `Using the provided image as a strong reference, create a new cinematic frame visualizing this moment: "${shot}". Scene context: "${frame.sceneDescription}". Maintain visual consistency.`;
-                newBase64Image = await generateImageFromImageAndText(
-                    existingImage.base64,
-                    existingImage.mimeType,
-                    modificationPrompt,
-                    apiKey
-                );
-                mimeType = existingImage.mimeType;
-            } else if (referenceImage) {
-                // First generation, but we have a main reference image
-                const base64Data = referenceImage.preview.split(',')[1];
-                mimeType = referenceImage.file.type;
-                const imagePrompt = `Using the provided image as a strong visual reference for characters, style, and environment, create a new cinematic frame. The scene is: "${frame.sceneDescription}". Specifically, visualize this moment: "${shot}".`;
-                newBase64Image = await generateImageFromImageAndText(
-                    base64Data,
-                    mimeType,
-                    imagePrompt,
-                    apiKey
-                );
-            } else {
-                // First generation, no reference image (text-to-image only)
-                const imagePrompt = `Cinematic movie frame, photorealistic, ${frame.mood} mood. The scene is: "${frame.sceneDescription}". Specifically focus on visualizing this moment: "${shot}".`;
-                newBase64Image = await generateImage(imagePrompt, "16:9", apiKey);
-                // mimeType remains default 'image/png'
-            }
+            // Construct a single, detailed prompt for text-to-image generation.
+            // This now always uses the text-to-image model to ensure the selected aspect ratio is respected.
+            // If a global reference image exists, we add a textual hint to the prompt.
+            const referenceHint = referenceImage ? `The visual style should be consistent with the main reference image provided for the story. ` : '';
+            const imagePrompt = `Cinematic movie frame, ${visualStyle || 'photorealistic'}, ${frame.mood} mood. ${referenceHint}The scene is: "${frame.sceneDescription}". Specifically, visualize this moment: "${shot}".`;
+
+            // Always use the generateImage service which respects the aspectRatio parameter.
+            const newBase64Image = await generateImage(imagePrompt, aspectRatio, apiKey);
+            const mimeType = 'image/png'; // generateImage always returns png
     
             const imageUrl = `data:${mimeType};base64,${newBase64Image}`;
             setGeneratedImages(prev => ({
@@ -286,9 +271,20 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
                             name="storyIdea"
                             value={storyIdea}
                             onChange={(e) => setStoryIdea(e.target.value)}
-                            rows={10}
+                            rows={4}
                             placeholder="Contoh: seorang detektif kesepian di kota cyberpunk yang menemukan petunjuk tentang android yang hilang..."
                         />
+                         <div className="mt-4">
+                            <SelectField
+                                label="Gaya Visual (Opsional)"
+                                name="visualStyle"
+                                value={visualStyle}
+                                onChange={(e) => setVisualStyle(e.target.value)}
+                                options={visualStyleOptions}
+                                defaultOption="Pilih Gaya Visual..."
+                                tooltip="Gaya visual akan memengaruhi deskripsi yang dihasilkan AI untuk konsistensi."
+                            />
+                        </div>
                     </div>
                     <div>
                         <label className="block text-gray-300 text-sm font-medium mb-1">
@@ -369,6 +365,22 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
                                     <div className="mt-auto pt-4 border-t border-gray-600">
                                         <h5 className="text-sm font-semibold text-white mb-2">Visualisasikan Frame</h5>
                                         
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <label className="text-xs text-gray-400 font-semibold">Rasio Aspek:</label>
+                                            <button 
+                                                onClick={() => setAspectRatio('16:9')}
+                                                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${aspectRatio === '16:9' ? 'bg-blue-600 text-white shadow' : 'bg-gray-600 hover:bg-gray-500'}`}
+                                            >
+                                                16:9
+                                            </button>
+                                            <button 
+                                                onClick={() => setAspectRatio('9:16')}
+                                                className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${aspectRatio === '9:16' ? 'bg-blue-600 text-white shadow' : 'bg-gray-600 hover:bg-gray-500'}`}
+                                            >
+                                                9:16
+                                            </button>
+                                        </div>
+
                                         <div className="mb-3">
                                             {(() => {
                                                 const isLoading = loadingStates[frame.sceneNumber]?.image;
@@ -418,7 +430,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
                                 <Copy className="w-4 h-4" />
                             </button>
                         </div>
-                        <button onClick={() => onGenerateVideo(finalPrompt)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <button onClick={() => onGenerateVideo(finalPrompt, referenceImage?.file)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
                             <Video className="w-5 h-5" /> Kirim ke Video Generator
                         </button>
                     </div>
