@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, Box, Image, Edit, Banknote, MapPin, Film, Camera, Settings, HelpCircle, Video, Layers, Clapperboard, GitMerge, ClipboardSignature, Archive } from 'lucide-react';
+import { Home, Users, Box, Image, Edit, Banknote, MapPin, Film, Camera, Settings, HelpCircle, Video, Layers, Clapperboard, GitMerge, ClipboardSignature, Archive, Wand2 } from 'lucide-react';
 
 import HomePage from './components/HomePage';
 import AssetBuilderPage from './components/AssetBuilderPage';
@@ -16,6 +16,7 @@ import SettingsPage from './components/SettingsPage';
 import HelpPage from './components/HelpPage';
 import Sidebar from './components/layout/Sidebar';
 import useLocalStorage from './hooks/useLocalStorage';
+import ImageGeneratorPage from './components/ImageGeneratorPage';
 
 import { Page, AssetType, NavigationStructureItem } from './types';
 import { subjectFormFields, objectFormFields, locationFormFields, actionFormFields, initialSubjectFormData, initialObjectFormData, initialLocationFormData, initialActionFormData } from './constants';
@@ -57,6 +58,7 @@ const App: React.FC = () => {
             icon: <Image className="w-5 h-5" />, label: "Image Tools",
             children: [
                 { icon: <Image className="w-5 h-5" />, label: "Image Detector", page: 'imageDetector' },
+                { icon: <Wand2 className="w-5 h-5" />, label: "Image Generator", page: 'imageGenerator' },
                 { icon: <ClipboardSignature className="w-5 h-5" />, label: "Pencerita AI", page: 'storyGenerator' },
                 { icon: <Clapperboard className="w-5 h-5" />, label: "Storyboard by Image", page: 'storyboardGenerator' },
                 { icon: <Layers className="w-5 h-5" />, label: "Penggabung Gambar", page: 'imageFusion' },
@@ -101,6 +103,8 @@ const App: React.FC = () => {
                 return <StoryboardGeneratorPage {...commonProps} onGenerateVideo={handleGenerateVideoFromPrompt} />;
             case 'imageFusion':
                 return <ImageFusionPage {...commonProps} onGenerateVideo={handleGenerateVideoFromPrompt} />;
+            case 'imageGenerator':
+                return <ImageGeneratorPage {...commonProps} onGenerateVideo={handleGenerateVideoFromPrompt} />;
             case 'videoFusion':
                 return <VideoFusionPage {...commonProps} onGenerateVideo={handleGenerateVideoFromPrompt} />;
             case 'videoGenerator':
@@ -110,7 +114,7 @@ const App: React.FC = () => {
              case 'settings':
                 return <SettingsPage apiKey={apiKey} setApiKey={setApiKey} />;
              case 'help':
-                return <HelpPage />;
+                return <HelpPage apiKey={apiKey} />;
             default:
                 return <HomePage setCurrentPage={setCurrentPage} />;
         }

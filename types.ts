@@ -14,7 +14,8 @@ export type Page =
   | 'settings'
   | 'help'
   | 'videoGenerator'
-  | 'storyGenerator';
+  | 'storyGenerator'
+  | 'imageGenerator';
 
 export enum AssetType {
     Subjek = 'Subjek',

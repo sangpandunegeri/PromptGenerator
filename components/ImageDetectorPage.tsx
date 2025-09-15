@@ -269,7 +269,8 @@ const ImageDetectorPage: React.FC<ImageDetectorPageProps> = ({ setCurrentPage, s
                         <h3 className="text-xl font-semibold text-white mb-4">Pratinjau Gambar / Frame Terpilih</h3>
                         <img src={imagePreview} alt="Pratinjau" className="max-w-full h-auto max-h-80 rounded-lg shadow-md border border-gray-600" />
                         <button onClick={handleDetectImage} disabled={loading} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Deteksi Prompt dari Frame'}
+                            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                            {loading ? 'Mendeteksi...' : 'Deteksi Prompt dari Frame'}
                         </button>
                     </div>
                 )}
@@ -298,25 +299,25 @@ const ImageDetectorPage: React.FC<ImageDetectorPageProps> = ({ setCurrentPage, s
                         </div>
                         <div className="relative group">
                              <button onClick={() => handleExtractAndNavigate('subjek')} disabled={isParsing} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                 {isParsing && <Loader2 className="w-5 h-5 animate-spin" />} <Users className="w-5 h-5" /> Jadikan Subjek
+                                 {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Users className="w-5 h-5" />} {isParsing ? 'Mengekstrak...' : 'Jadikan Subjek'}
                              </button>
                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Ekstrak detail subjek dan buka di Subject Builder.</span>
                         </div>
                         <div className="relative group">
                              <button onClick={() => handleExtractAndNavigate('objek')} disabled={isParsing} className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                {isParsing && <Loader2 className="w-5 h-5 animate-spin" />} <Box className="w-5 h-5" /> Jadikan Objek
+                                {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Box className="w-5 h-5" />} {isParsing ? 'Mengekstrak...' : 'Jadikan Objek'}
                              </button>
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Ekstrak detail objek dan buka di Object Builder.</span>
                         </div>
                         <div className="relative group">
                              <button onClick={() => handleExtractAndNavigate('lokasi')} disabled={isParsing} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                 {isParsing && <Loader2 className="w-5 h-5 animate-spin" />} <MapPin className="w-5 h-5" /> Jadikan Lokasi
+                                 {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MapPin className="w-5 h-5" />} {isParsing ? 'Mengekstrak...' : 'Jadikan Lokasi'}
                              </button>
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Ekstrak detail lokasi dan buka di Location Builder.</span>
                         </div>
                         <div className="relative group">
                              <button onClick={() => handleExtractAndNavigate('aksi')} disabled={isParsing} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                 {isParsing && <Loader2 className="w-5 h-5 animate-spin" />} <Film className="w-5 h-5" /> Jadikan Aksi
+                                 {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Film className="w-5 h-5" />} {isParsing ? 'Mengekstrak...' : 'Jadikan Aksi'}
                              </button>
                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Ekstrak deskripsi aksi dan buka di Action Builder.</span>
                         </div>

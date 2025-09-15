@@ -1,26 +1,18 @@
 import React, { useState } from 'react';
-import { Copy, Banknote, Sparkles, Wand2, Image, Languages, Loader2, Video, X } from 'lucide-react';
+import { Copy, Banknote, Sparkles, Wand2, Languages, Loader2, Video, X } from 'lucide-react';
 import { Prompt, TargetEngine } from '../../types';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { prepareImagePrompt, translatePrompt, generateImage, refinePrompt } from '../../services/geminiService';
+import { translatePrompt, refinePrompt } from '../../services/geminiService';
 import TextAreaField from './TextAreaField';
 import SelectField from './SelectField';
 
 const targetEngineOptions = [
     {
-        label: "--- Model Video ---",
+        label: "Model Video",
         options: [
             { value: 'veo', label: 'Google VEO' },
             { value: 'runway', label: 'Runway ML' },
             { value: 'kling', label: 'Kling' },
-        ]
-    },
-    {
-        label: "--- Model Gambar ---",
-        options: [
-            { value: 'imagen', label: 'Google Imagen' },
-            { value: 'midjourney', label: 'Midjourney' },
-            { value: 'flux', label: 'Flux' },
         ]
     }
 ];
@@ -30,21 +22,15 @@ interface PromptGeneratorBaseProps {
     mode: string;
     children: (displayPrompt: (prompt: string) => void, loading: boolean, targetEngine: TargetEngine) => React.ReactNode;
     getFormData: () => any;
-    getImageNarrative: () => string;
     apiKey: string;
     onGenerateVideo: (prompt: string, imageFile: File | null) => void;
     imageFile?: File | null;
 }
 
-const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, children, getFormData, getImageNarrative, apiKey, onGenerateVideo, imageFile }) => {
+const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, children, getFormData, apiKey, onGenerateVideo, imageFile }) => {
     const [generatedPrompt, setGeneratedPrompt] = useState('');
     const [prompts, setPrompts] = useLocalStorage<Prompt[]>('prompts', []);
     
-    const [imagePrompt, setImagePrompt] = useState('');
-    const [isPreparingImagePrompt, setIsPreparingImagePrompt] = useState(false);
-    const [generatedImages, setGeneratedImages] = useState<{ url: string }[]>([]);
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-    const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
     const [translatedPrompt, setTranslatedPrompt] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
 
@@ -66,10 +52,8 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
     
     const displayPrompt = (finalPrompt: string) => {
         setGeneratedPrompt(finalPrompt);
-        setImagePrompt('');
-        setGeneratedImages([]);
         setTranslatedPrompt('');
-        showMessage("Prompt berhasil dibuat!", "success");
+        showMessage("Prompt video berhasil dibuat!", "success");
     };
 
     const handleCopy = (textToCopy: string, type: string) => {
@@ -92,36 +76,13 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
         setPrompts([newPrompt, ...prompts]);
         showMessage("Prompt berhasil disimpan ke Bank!", "success");
     };
-    
-    const handlePrepareImagePrompt = async () => {
-        if (!apiKey) {
-            showMessage("Kunci API Gemini belum diatur.", "error");
-            return;
-        }
-        if (!generatedPrompt) {
-            showMessage("Buat prompt video terlebih dahulu.", "error");
-            return;
-        }
-        setIsPreparingImagePrompt(true);
-        showMessage("Mempersiapkan prompt gambar...", "info");
-        try {
-            const narrative = getImageNarrative();
-            const preparedText = await prepareImagePrompt(narrative, apiKey);
-            setImagePrompt(preparedText);
-            showMessage("Prompt gambar berhasil disiapkan!", "success");
-        } catch (error) {
-            showMessage(`Gagal mempersiapkan prompt: ${(error as Error).message}`, "error");
-        } finally {
-            setIsPreparingImagePrompt(false);
-        }
-    };
 
     const handleTranslatePrompt = async () => {
         if (!apiKey) {
             showMessage("Kunci API Gemini belum diatur.", "error");
             return;
         }
-        const textToTranslate = imagePrompt || generatedPrompt;
+        const textToTranslate = generatedPrompt;
         if (!textToTranslate) {
             showMessage("Tidak ada prompt untuk diterjemahkan.", "error");
             return;
@@ -136,29 +97,6 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
             showMessage(`Gagal menerjemahkan: ${(error as Error).message}`, "error");
         } finally {
             setIsTranslating(false);
-        }
-    };
-
-    const handleGenerateImage = async () => {
-        if (!apiKey) {
-            showMessage("Kunci API Gemini belum diatur.", "error");
-            return;
-        }
-        if (!imagePrompt) {
-            showMessage("Siapkan prompt gambar terlebih dahulu.", "error");
-            return;
-        }
-        setIsGeneratingImage(true);
-        setGeneratedImages([]);
-        showMessage("Membuat gambar...", "info");
-        try {
-            const base64Image = await generateImage(imagePrompt, aspectRatio, apiKey);
-            setGeneratedImages([{ url: `data:image/png;base64,${base64Image}` }]);
-            showMessage("Gambar berhasil dibuat!", "success");
-        } catch (error) {
-             showMessage(`Gagal membuat gambar: ${(error as Error).message}`, "error");
-        } finally {
-            setIsGeneratingImage(false);
         }
     };
 
@@ -199,7 +137,7 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
 
             <div className="mb-6 max-w-sm">
                 <SelectField 
-                    label="Target Model" 
+                    label="Target Model Video" 
                     name="targetEngine" 
                     value={targetEngine} 
                     onChange={(e) => setTargetEngine(e.target.value as TargetEngine)}
@@ -217,20 +155,6 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
                         <p className="text-gray-200 whitespace-pre-wrap">{generatedPrompt}</p>
                         <button onClick={() => handleCopy(generatedPrompt, 'Prompt')} className="absolute top-2 right-2 p-2 rounded-full bg-gray-600 hover:bg-gray-500"><Copy className="w-4 h-4" /></button>
                     </div>
-                    
-                    {imagePrompt && (
-                        <div className="mt-6">
-                            <h3 className="text-xl font-semibold text-white mb-4">Prompt Gambar (Dapat Diedit):</h3>
-                            <div className="relative bg-gray-900 p-4 rounded-md border border-gray-600 mb-4">
-                                <textarea
-                                    value={imagePrompt}
-                                    onChange={(e) => setImagePrompt(e.target.value)}
-                                    className="w-full h-32 p-2 bg-gray-800 rounded"
-                                />
-                                <button onClick={() => handleCopy(imagePrompt, 'Prompt Gambar')} className="absolute top-2 right-2 p-2 rounded-full bg-gray-600 hover:bg-gray-500"><Copy className="w-4 h-4" /></button>
-                            </div>
-                        </div>
-                    )}
 
                     {translatedPrompt && (
                          <div className="mt-6">
@@ -242,40 +166,13 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
                          </div>
                     )}
                     
-                    {isGeneratingImage && <div className="text-center p-6"><Loader2 className="w-8 h-8 animate-spin mx-auto" /></div>}
-                    {generatedImages.length > 0 && (
-                        <div className="mt-6">
-                            <h3 className="text-xl font-semibold text-white mb-4">Gambar Dihasilkan:</h3>
-                            <img src={generatedImages[0].url} alt="Generated" className="rounded-lg shadow-lg w-full max-w-md mx-auto h-auto border-2 border-gray-600" />
-                        </div>
-                    )}
-
                     <div className="flex flex-wrap gap-4 justify-end items-center mt-6">
                          <button onClick={handleTranslatePrompt} disabled={isTranslating} className="bg-cyan-600 hover:bg-cyan-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                            {isTranslating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Languages className="w-5 h-5" />} Terjemahkan
+                            {isTranslating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Languages className="w-5 h-5" />} {isTranslating ? 'Menerjemahkan...' : 'Terjemahkan'}
                         </button>
                         <button onClick={() => setIsRefineModalOpen(true)} className="bg-yellow-600 hover:bg-yellow-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2">
                             <Sparkles className="w-5 h-5" /> Perbaiki Prompt
                         </button>
-                        <div className="relative group">
-                            <button onClick={handlePrepareImagePrompt} disabled={isPreparingImagePrompt} className="bg-orange-600 hover:bg-orange-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                {isPreparingImagePrompt ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />} Siapkan Prompt Gambar
-                            </button>
-                             <span className="absolute bottom-full right-0 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Menggunakan AI untuk mengubah prompt video Anda menjadi prompt gambar yang lebih ringkas dan efektif.</span>
-                        </div>
-                        <div className="relative group">
-                             <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as any)} className="p-2 bg-gray-800 border rounded">
-                                    <option value="16:9">Landscape</option>
-                                    <option value="9:16">Portrait</option>
-                            </select>
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Pilih aspek rasio untuk gambar yang akan dihasilkan.</span>
-                        </div>
-                        <div className="relative group">
-                            <button onClick={handleGenerateImage} disabled={!imagePrompt || isGeneratingImage} className="bg-purple-600 hover:bg-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                {isGeneratingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Image className="w-5 h-5" />} Hasilkan Gambar
-                            </button>
-                             <span className="absolute bottom-full right-0 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 border border-gray-700 rounded-md shadow-lg invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 z-50 pointer-events-none">Membuat gambar statis berdasarkan 'Prompt Gambar' yang telah disiapkan.</span>
-                        </div>
                         <div className="relative group">
                             <button onClick={() => onGenerateVideo(generatedPrompt, imageFile || null)} className="bg-purple-600 hover:bg-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2">
                                 <Video className="w-5 h-5" /> Buat Video
@@ -319,7 +216,7 @@ const PromptGeneratorBase: React.FC<PromptGeneratorBaseProps> = ({ title, mode, 
                             <button onClick={() => setIsRefineModalOpen(false)} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">Batal</button>
                             <button onClick={handleRefinePrompt} disabled={isRefining || !refineInstruction.trim()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 {isRefining ? <Loader2 className="w-5 h-5 animate-spin"/> : <Wand2 className="w-5 h-5" />}
-                                Hasilkan Perbaikan
+                                {isRefining ? 'Memperbaiki...' : 'Hasilkan Perbaikan'}
                             </button>
                         </div>
                     </div>

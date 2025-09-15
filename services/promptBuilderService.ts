@@ -112,6 +112,14 @@ export const constructCinematicPrompt = (
     const { scene, ...global } = formData;
     const mainChar = subjects.find(s => s.id === global.mainCharacterId);
     
+    // Define these at the top to be used by all engine logic
+    const supportingChars = global.supportingCharacterIds
+        .map(id => subjects.find(s => s.id === id))
+        .filter((s): s is Subject => !!s);
+    const sceneObjects = scene.objects
+        .map(o => objects.find(obj => obj.id === o.objectId))
+        .filter((o): o is GObject => !!o);
+
     const effects: string[] = [scene.animationFx, scene.cgiFx].filter((e): e is string => !!e);
 
     // --- Image Model Logic ---
@@ -142,13 +150,6 @@ export const constructCinematicPrompt = (
     
     // For Runway & Kling (keyword-based)
     if (['runway', 'kling'].includes(targetEngine)) {
-        const supportingChars = global.supportingCharacterIds
-            .map(id => subjects.find(s => s.id === id))
-            .filter((s): s is Subject => !!s);
-        const sceneObjects = scene.objects
-            .map(o => objects.find(obj => obj.id === o.objectId))
-            .filter((o): o is GObject => !!o);
-
         const sequenceKeywords = scene.sceneSequence.map(item => {
             switch (item.type) {
                 case 'dialog':
@@ -165,7 +166,7 @@ export const constructCinematicPrompt = (
         const corePhrases = [
             global.visualStyle,
             mainChar ? generateSubjectDescription(mainChar).replace(/\./g, '') : null,
-            supportingChars.length > 0 ? `with ${supportingChars.map(s => s.name).join(' and ')}` : null,
+            supportingChars.length > 0 ? `also featuring ${supportingChars.map(s => generateSubjectDescription(s).replace(/\./g, '')).join(', ')}` : null,
             scene.description,
             `in ${generateEditableLocationDescription(global.location)}`,
             `during the ${global.time}`,
@@ -177,7 +178,7 @@ export const constructCinematicPrompt = (
             scene.cameraMovement,
             ...effects,
             sequenceKeywords,
-            sceneObjects.length > 0 ? `featuring ${sceneObjects.map(o => o.name).join(', ')}` : null,
+            sceneObjects.length > 0 ? `The scene includes these objects: ${sceneObjects.map(o => generateObjectDescription(o).replace(/\./g, '')).join(', ')}` : null,
             global.additionalVisualDetails
         ];
         return corePhrases.filter(Boolean).join(', ');
@@ -201,6 +202,14 @@ export const constructCinematicPrompt = (
     
     if (mainChar) {
         phrases.push(`The main focus is on ${generateSubjectDescription(mainChar)}`);
+    }
+
+    if (supportingChars.length > 0) {
+        phrases.push(`Also present in the scene are: ${supportingChars.map(s => generateSubjectDescription(s)).join(' ')}`);
+    }
+
+    if (sceneObjects.length > 0) {
+        phrases.push(`The scene prominently features these objects: ${sceneObjects.map(o => generateObjectDescription(o)).join(' ')}`);
     }
     
     if (scene.description) {
@@ -309,14 +318,10 @@ export const constructCinematicStopMotionPrompt = (
 
     // --- Image Model Logic ---
     if (['imagen', 'midjourney', 'flux'].includes(targetEngine)) {
-        // Use the first action as the representative moment for the image prompt
         const representativeAction = actions.length > 0 ? actions[0].description : 'standing still';
-
         if (targetEngine === 'imagen') {
             return `A stop motion animation frame in a ${global.visualStyle || 'charming'} style. ${mainChar ? generateSubjectDescription(mainChar) : 'A character'} is ${representativeAction} in ${locationDesc}. The scene has a ${global.mood || 'neutral'} mood, set during the ${global.time || 'day'} with ${global.weather || 'clear'} weather.`;
         }
-        
-        // For Midjourney & Flux
         const imageParts = [
             `stop motion animation`,
             global.visualStyle,
@@ -331,14 +336,6 @@ export const constructCinematicStopMotionPrompt = (
     }
 
     // --- Video Model Logic ---
-    const actionSequence = actions.map(action => {
-        let actionPhrase = `${mainChar ? mainChar.name : 'the character'} ${action.description || 'pauses'}`;
-        if (action.cameraMovement) {
-            actionPhrase += `, camera: ${action.cameraMovement.toLowerCase()}`;
-        }
-        actionPhrase += ` (for ${action.duration || '2'}s)`;
-        return actionPhrase;
-    });
 
     // For Runway & Kling (keyword-based)
     if (['runway', 'kling'].includes(targetEngine)) {
@@ -350,8 +347,11 @@ export const constructCinematicStopMotionPrompt = (
             `${global.mood} mood`,
             `during the ${global.time}`,
             `${global.weather} weather`,
-            ...actionSequence
         ];
+        const actionKeywords = actions.map((action, index) => {
+             return `shot ${index + 1}: ${action.description || 'pause'}, camera ${action.cameraMovement || 'static'}, for ${action.duration || '2'} seconds`;
+        }).join('; ');
+        corePhrases.push(actionKeywords);
         return corePhrases.filter(Boolean).join(', ');
     }
 
@@ -361,7 +361,7 @@ export const constructCinematicStopMotionPrompt = (
     if (global.visualStyle) opening += ` with a ${global.visualStyle.toLowerCase()} aesthetic`;
     opening += `.`;
     if (hasReferenceImage) {
-        opening += ` The final result must be visually inspired by the provided reference image, especially in terms of character design, color palette, and overall style.`
+        opening += ` The final result must be visually inspired by the provided reference image, especially in terms of character design, color palette, and overall style.`;
     }
     phrases.push(opening);
 

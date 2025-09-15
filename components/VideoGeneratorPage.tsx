@@ -47,7 +47,8 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
     // Global settings for the batch
     const [numberOfVideos, setNumberOfVideos] = useState(1);
     const [quality, setQuality] = useState('1080p');
-    const [model, setModel] = useState('veo-3.0-generate-preview');
+    const [model, setModel] = useState('veo-2.0-generate-001');
+    const [aspectRatio, setAspectRatio] = useState('16:9');
 
     // Effect to handle prompt loaded from another page
     useEffect(() => {
@@ -152,7 +153,7 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
         showMessage(`Memulai pembuatan ${validJobs.length} video... Ini akan memakan waktu.`, 'info');
     
         const generationPromises = validJobs.map(job => 
-            generateVideo(job.prompt, job.imageFile, numberOfVideos, model, '16:9', quality, apiKey)
+            generateVideo(job.prompt, job.imageFile, numberOfVideos, model, aspectRatio, quality, apiKey)
                 .then(async (downloadLinks) => {
                     const fetchedUrls = await Promise.all(
                         downloadLinks.map(async (link) => {
@@ -187,6 +188,11 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
         showMessage(`${successCount} dari ${validJobs.length} video berhasil dibuat!`, 'success');
         setIsLoading(false);
         setProgress(null);
+    };
+    
+    const handleDeleteResult = (jobId: string) => {
+        setResults(prev => prev.filter(r => r.jobId !== jobId));
+        showMessage("Hasil yang gagal telah dihapus.", "info");
     };
     
     const handleContinueStory = (videoUrl: string) => {
@@ -272,19 +278,19 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
                     <div className="border-t border-gray-600 pt-4">
                         <h3 className="text-xl font-bold text-white mb-4">Pengaturan Global</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <SelectField
+                             <SelectField
                                 label="Model"
                                 name="model"
                                 value={model}
                                 options={[
+                                    { value: 'veo-2.0-generate-001', label: 'VEO 2.0' },
                                     { value: 'veo-3.0-generate-preview', label: 'VEO 3.0 (Preview)' },
                                     { value: 'veo-3.0-fast-generate-preview', label: 'VEO 3.0 Fast (Preview)' },
-                                    { value: 'veo-2.0-generate-001', label: 'VEO 2.0' }
                                 ]}
                                 onChange={(e) => setModel(e.target.value)}
                                 tooltip="Pilih model VEO untuk pembuatan video."
                             />
-                            <SelectField 
+                             <SelectField 
                                 label="Kualitas" 
                                 name="quality" 
                                 value={quality} 
@@ -294,6 +300,18 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
                                     {value: '4k', label: '4K'}
                                 ]} 
                                 onChange={(e) => setQuality(e.target.value)} 
+                            />
+                             <SelectField
+                                label="Aspek Rasio"
+                                name="aspectRatio"
+                                value={aspectRatio}
+                                options={[
+                                    {value: '16:9', label: '16:9 (Landscape)'},
+                                    {value: '9:16', label: '9:16 (Portrait)'},
+                                    {value: '1:1', label: '1:1 (Square)'},
+                                ]}
+                                onChange={(e) => setAspectRatio(e.target.value)}
+                                tooltip="Pilih aspek rasio untuk semua video dalam batch ini."
                             />
                         </div>
                     </div>
@@ -336,7 +354,16 @@ const VideoGeneratorPage: React.FC<VideoGeneratorPageProps> = ({ apiKey, promptD
                                     <div key={result.jobId} className="bg-gray-800 p-4 rounded-lg">
                                         <p className="text-sm text-gray-300 italic mb-2 line-clamp-2" title={result.originalPrompt}>Prompt: "{result.originalPrompt}"</p>
                                         {result.error ? (
-                                            <p className="text-red-400 text-sm">Gagal: {result.error}</p>
+                                            <div className="flex justify-between items-start">
+                                                <p className="text-red-400 text-sm flex-1 break-words pr-2">Gagal: {result.error}</p>
+                                                <button 
+                                                    onClick={() => handleDeleteResult(result.jobId)} 
+                                                    className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full flex-shrink-0"
+                                                    title="Hapus hasil ini"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         ) : (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {result.urls.map((url, index) => (

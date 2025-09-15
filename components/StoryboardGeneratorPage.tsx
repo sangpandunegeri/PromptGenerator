@@ -404,7 +404,7 @@ const StoryboardGeneratorPage: React.FC<StoryboardGeneratorPageProps> = ({ apiKe
                                         <span className="text-sm font-bold text-gray-400 mt-2 block">ADEGAN {index + 1}</span>
                                         
                                         <button onClick={() => handleGeneratePanelPrompt(panel.id)} disabled={panel.isGenerating} className="mt-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 text-sm w-full">
-                                            {panel.isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} Hasilkan Deskripsi
+                                            {panel.isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} {panel.isGenerating ? 'Menghasilkan...' : 'Hasilkan Deskripsi'}
                                         </button>
                                         
                                         <button onClick={() => openEditModal(panel)} className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 text-sm w-full">
@@ -432,7 +432,7 @@ const StoryboardGeneratorPage: React.FC<StoryboardGeneratorPageProps> = ({ apiKe
                     <h3 className="text-xl font-semibold text-white mb-4">Prompt Storyboard Gabungan</h3>
                     <p className="text-gray-400 mb-4 text-sm">Gabungkan semua adegan dan gerakan kamera menjadi satu narasi video yang utuh.</p>
                     <button onClick={handleGenerateFinalPrompt} disabled={isGeneratingFinalPrompt || panels.some(p => !p.generatedPrompt)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                        {isGeneratingFinalPrompt ? <Loader2 className="w-5 h-5 animate-spin"/> : <Bot className="w-5 h-5"/>} Hasilkan Prompt Gabungan
+                        {isGeneratingFinalPrompt ? <Loader2 className="w-5 h-5 animate-spin"/> : <Bot className="w-5 h-5"/>} {isGeneratingFinalPrompt ? 'Menggabungkan...' : 'Hasilkan Prompt Gabungan'}
                     </button>
                     {finalPrompt && (
                         <div className="mt-6">
@@ -504,7 +504,7 @@ const StoryboardGeneratorPage: React.FC<StoryboardGeneratorPageProps> = ({ apiKe
                         <div className="flex justify-end gap-4 mt-6">
                             <button onClick={() => setIsEditModalOpen(false)} className="bg-gray-600 font-bold py-2 px-4 rounded-lg">Batal</button>
                             <button onClick={handleGenerateEdit} disabled={isEditing || !editPrompt.trim()} className="bg-blue-600 hover:bg-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50">
-                                {isEditing ? <Loader2 className="w-5 h-5 animate-spin"/> : <Wand2 className="w-5 h-5"/>} Hasilkan & Tambah Panel
+                                {isEditing ? <Loader2 className="w-5 h-5 animate-spin"/> : <Wand2 className="w-5 h-5"/>} {isEditing ? 'Memproses...' : 'Hasilkan & Tambah Panel'}
                             </button>
                         </div>
                     </div>

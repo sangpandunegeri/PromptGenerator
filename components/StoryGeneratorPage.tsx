@@ -198,15 +198,16 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
         setLoadingStates(prev => ({ ...prev, [frame.sceneNumber]: { ...prev[frame.sceneNumber], image: true } }));
         
         try {
-            // Construct a single, detailed prompt for text-to-image generation.
-            // This now always uses the text-to-image model to ensure the selected aspect ratio is respected.
-            // If a global reference image exists, we add a textual hint to the prompt.
+            // Membuat prompt tunggal yang detail untuk pembuatan gambar dari teks.
+            // Logika ini sekarang secara konsisten menggunakan model text-to-image untuk memastikan
+            // rasio aspek yang dipilih selalu diterapkan, bahkan jika ada gambar referensi.
             const referenceHint = referenceImage ? `The visual style should be consistent with the main reference image provided for the story. ` : '';
             const imagePrompt = `Cinematic movie frame, ${visualStyle || 'photorealistic'}, ${frame.mood} mood. ${referenceHint}The scene is: "${frame.sceneDescription}". Specifically, visualize this moment: "${shot}".`;
 
-            // Always use the generateImage service which respects the aspectRatio parameter.
+            // Selalu gunakan layanan generateImage, yang mematuhi parameter aspectRatio.
+            // Ini memperbaiki bug di mana rasio diabaikan saat gambar referensi ada.
             const newBase64Image = await generateImage(imagePrompt, aspectRatio, apiKey);
-            const mimeType = 'image/png'; // generateImage always returns png
+            const mimeType = 'image/png'; // generateImage selalu mengembalikan png
     
             const imageUrl = `data:${mimeType};base64,${newBase64Image}`;
             setGeneratedImages(prev => ({
@@ -354,7 +355,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
                                         className="bg-cyan-700 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 disabled:opacity-50 text-xs w-full justify-center mb-3"
                                     >
                                         {loadingStates[frame.sceneNumber]?.cameraDetect ? <Loader2 className="w-4 h-4 animate-spin"/> : <Film className="w-4 h-4"/>}
-                                        Deteksi Tipe Shot & Gerakan Kamera
+                                        {loadingStates[frame.sceneNumber]?.cameraDetect ? 'Mendeteksi...' : 'Deteksi Tipe Shot & Gerakan Kamera'}
                                     </button>
                                     <div className="text-xs text-gray-400 space-y-1 mb-4">
                                         <p><span className="font-semibold text-cyan-400">Shot:</span> {frame.shotType}</p>
@@ -403,7 +404,7 @@ const StoryGeneratorPage: React.FC<StoryGeneratorPageProps> = ({ apiKey, onGener
 
                                         <button onClick={() => handleSuggestShots(frame)} disabled={!!loadingStates[frame.sceneNumber]?.suggestions} className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 disabled:opacity-50 text-xs">
                                             {loadingStates[frame.sceneNumber]?.suggestions ? <Loader2 className="w-4 h-4 animate-spin"/> : <Camera className="w-4 h-4"/>}
-                                            {suggestedShots[frame.sceneNumber]?.length > 0 ? 'Sarankan Lagi' : 'Sarankan Shot'}
+                                            {loadingStates[frame.sceneNumber]?.suggestions ? 'Menyarankan...' : (suggestedShots[frame.sceneNumber]?.length > 0 ? 'Sarankan Lagi' : 'Sarankan Shot')}
                                         </button>
 
                                         {suggestedShots[frame.sceneNumber]?.length > 0 && (

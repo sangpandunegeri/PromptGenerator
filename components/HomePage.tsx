@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Image, Film, Edit, Camera, Banknote, Layers, HelpCircle, Video, Clapperboard, GitMerge, ClipboardSignature } from 'lucide-react';
+import { Users, Image, Film, Edit, Camera, Banknote, Layers, HelpCircle, Video, Clapperboard, GitMerge, ClipboardSignature, Wand2 } from 'lucide-react';
 import { Page } from '../types';
 import FeatureCard from './ui/FeatureCard';
 
@@ -19,7 +19,7 @@ const HomePage: React.FC<HomePageProps> = ({ setCurrentPage }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FeatureCard icon={<Users className="w-8 h-8 text-blue-400" />} title="Asset Builder" description="Buat dan simpan subjek serta objek kustom Anda." onClick={() => setCurrentPage('subjectBuilder')} />
                 <FeatureCard icon={<Image className="w-8 h-8 text-green-400" />} title="Image Detector" description="Deteksi prompt dari gambar atau frame video, dan simpan sebagai aset." onClick={() => setCurrentPage('imageDetector')} />
-                <FeatureCard icon={<Film className="w-8 h-8 text-yellow-400" />} title="Action Builder" description="Buat dan kelola koleksi aksi sinematik Anda." onClick={() => setCurrentPage('actionBuilder')} />
+                <FeatureCard icon={<Wand2 className="w-8 h-8 text-yellow-400" />} title="Image Generator" description="Hasilkan gambar dari prompt teks dengan model Imagen." onClick={() => setCurrentPage('imageGenerator')} />
                 <FeatureCard icon={<Edit className="w-8 h-8 text-purple-400" />} title="Mode Manual" description="Kontrol penuh atas setiap detail prompt video Anda." onClick={() => setCurrentPage('manualMode')} />
                 <FeatureCard icon={<Camera className="w-8 h-8 text-red-400" />} title="One Stop Motion Shot" description="Buat prompt video berurutan dengan mudah." onClick={() => setCurrentPage('stopMotionShot')} />
                 <FeatureCard icon={<ClipboardSignature className="w-8 h-8 text-cyan-400" />} title="Pencerita AI" description="Ubah ide cerita menjadi storyboard sinematik instan." onClick={() => setCurrentPage('storyGenerator')} />

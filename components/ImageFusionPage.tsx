@@ -424,7 +424,7 @@ const ImageFusionPage: React.FC<ImageFusionPageProps> = ({ apiKey, onGenerateVid
                                     <p className="text-gray-300 mb-2 font-semibold">2. Hasilkan Perluasan:</p>
                                      <button onClick={handleGenerateRatioChange} disabled={isGeneratingRatio} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
                                         {isGeneratingRatio ? <Loader2 className="w-5 h-5 animate-spin"/> : <Wand2 className="w-5 h-5" />}
-                                        Hasilkan Perluasan
+                                        {isGeneratingRatio ? 'Memperluas...' : 'Hasilkan Perluasan'}
                                     </button>
                                 </div>
                                  <p className="text-xs text-gray-400">AI akan memperluas latar belakang gambar Anda agar sesuai dengan rasio baru tanpa memotong subjek utama.</p>

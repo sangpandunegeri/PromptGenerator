@@ -239,7 +239,7 @@ const StopMotionPage: React.FC<StopMotionPageProps> = ({ promptToLoad, onLoadCom
 
 
     return (
-        <PromptGeneratorBase title="One Stop Motion Shot 📸" mode="One Stop Motion Shot" getFormData={() => formData} getImageNarrative={() => constructStopMotionPrompt('imagen')} apiKey={apiKey} onGenerateVideo={onGenerateVideo} imageFile={imageFile}>
+        <PromptGeneratorBase title="One Stop Motion Shot 📸" mode="One Stop Motion Shot" getFormData={() => formData} apiKey={apiKey} onGenerateVideo={onGenerateVideo} imageFile={imageFile}>
             {(displayPrompt, _, targetEngine) => (
                 <>
                     <input type="file" ref={importPromptRef} onChange={handlePromptFileChange} className="hidden" accept=".json" />

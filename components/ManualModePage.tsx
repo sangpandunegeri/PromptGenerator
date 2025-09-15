@@ -9,7 +9,7 @@ import SelectField from './ui/SelectField';
 import TextAreaField from './ui/TextAreaField';
 import SceneInputGroup from './ui/SceneInputGroup';
 import NegativePromptDisplay from './ui/NegativePromptDisplay';
-import { constructCinematicPrompt, constructCinematicImageNarrative } from '../services/promptBuilderService';
+import { constructCinematicPrompt } from '../services/promptBuilderService';
 import InputField from './ui/InputField';
 
 interface ManualModePageProps {
@@ -149,10 +149,6 @@ const ManualModePage: React.FC<ManualModePageProps> = ({ promptToLoad, onLoadCom
         return prompt;
     };
 
-    const constructImageNarrative = () => {
-        return constructCinematicImageNarrative(formData, subjects);
-    };
-
     const handleExportPrompt = () => {
         const dataToSave = JSON.stringify(formData, null, 2);
         const blob = new Blob([dataToSave], { type: 'application/json' });
@@ -186,7 +182,7 @@ const ManualModePage: React.FC<ManualModePageProps> = ({ promptToLoad, onLoadCom
     };
     
     return (
-        <PromptGeneratorBase title="Mode Manual ✍🏻" mode="Manual Mode" getFormData={() => formData} getImageNarrative={constructImageNarrative} apiKey={apiKey} onGenerateVideo={onGenerateVideo}>
+        <PromptGeneratorBase title="Mode Manual ✍🏻" mode="Manual Mode" getFormData={() => formData} apiKey={apiKey} onGenerateVideo={onGenerateVideo}>
             {(displayPrompt, _, targetEngine) => (
                 <>
                     <input type="file" ref={importPromptRef} onChange={handlePromptFileChange} className="hidden" accept=".json" />
